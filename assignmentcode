@@ -1,0 +1,114 @@
+voting pod delete: we deleted the voting pod kubectl delete po vote-94849dc97-zg2tl, and we observed that it does not impact our voting and result
+Worker pod delete: we deleted the worker pod  kubectl delete po worker-dd46d7584-b2rsv , and we observed that it does not impact our voting and result
+Db pod delete: we deleted the database pod  kubectl delete po db-b54cd94f4-xw79b  , and we observed that it impacts the result app,  the result remains the same(it seems not working), because it was still trying to make the connection with the old db pod but since it was deleted so it was having the old DB pod data and it was showing that only.
+After that we restarted the result pod, and then we see the result app is wrokinbg fine because now it is making the connection with the new db pod, so our app works fine now.
+
+
+
+
+
+
+
+
+
+
+
+[root@ip-172-31-10-94 example-voting-app]# cd /root/example-voting-app/k8s-specifications
+[root@ip-172-31-10-94 k8s-specifications]# ll
+total 36
+-rw-r--r-- 1 root root 401 Oct 17 06:40 db-deployment.yaml
+-rw-r--r-- 1 root root 146 Oct 17 06:40 db-service.yaml
+-rw-r--r-- 1 root root 402 Oct 17 06:40 redis-deployment.yaml
+-rw-r--r-- 1 root root 152 Oct 17 06:40 redis-service.yaml
+-rw-r--r-- 1 root root 299 Oct 17 06:40 result-deployment.yaml
+-rw-r--r-- 1 root root 195 Oct 17 06:40 result-service.yaml
+-rw-r--r-- 1 root root 289 Oct 17 06:40 vote-deployment.yaml
+-rw-r--r-- 1 root root 192 Oct 17 06:40 vote-service.yaml
+-rw-r--r-- 1 root root 292 Oct 17 06:40 worker-deployment.yaml
+[root@ip-172-31-10-94 k8s-specifications]# kubectl apply -f .
+deployment.apps/db created
+service/db created
+deployment.apps/redis created
+service/redis created
+deployment.apps/result created
+service/result created
+deployment.apps/vote created
+service/vote created
+deployment.apps/worker created
+[root@ip-172-31-10-94 k8s-specifications]# kubectl get po
+NAME                      READY   STATUS    RESTARTS   AGE
+db-b54cd94f4-m6sq9        1/1     Running   0          12s
+redis-868d64d78-zq9ng     1/1     Running   0          12s
+result-5d57b59f4b-fp4pp   1/1     Running   0          12s
+vote-94849dc97-zg2tl      1/1     Running   0          11s
+worker-dd46d7584-b2rsv    1/1     Running   0          11s
+[root@ip-172-31-10-94 k8s-specifications]# kubectl get po - wide
+Error from server (NotFound): pods "-" not found
+Error from server (NotFound): pods "wide" not found
+[root@ip-172-31-10-94 k8s-specifications]# kubectl get po -o wide
+NAME                      READY   STATUS    RESTARTS   AGE   IP                NODE                                             NOMINATED NODE   READINESS GATES
+db-b54cd94f4-m6sq9        1/1     Running   0          31s   192.168.105.179   ip-172-31-8-95.ap-southeast-1.compute.internal   <none>           <none>
+redis-868d64d78-zq9ng     1/1     Running   0          31s   192.168.105.180   ip-172-31-8-95.ap-southeast-1.compute.internal   <none>           <none>
+result-5d57b59f4b-fp4pp   1/1     Running   0          31s   192.168.105.181   ip-172-31-8-95.ap-southeast-1.compute.internal   <none>           <none>
+vote-94849dc97-zg2tl      1/1     Running   0          30s   192.168.105.182   ip-172-31-8-95.ap-southeast-1.compute.internal   <none>           <none>
+worker-dd46d7584-b2rsv    1/1     Running   0          30s   192.168.105.183   ip-172-31-8-95.ap-southeast-1.compute.internal   <none>           <none>
+[root@ip-172-31-10-94 k8s-specifications]# kubectl get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+db           ClusterIP   10.99.237.28     <none>        5432/TCP         77s
+kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP          3m42s
+redis        ClusterIP   10.99.132.135    <none>        6379/TCP         77s
+result       NodePort    10.109.162.87    <none>        5001:31001/TCP   76s
+vote         NodePort    10.106.178.236   <none>        5000:31000/TCP   76s
+[root@ip-172-31-10-94 k8s-specifications]# ^C
+[root@ip-172-31-10-94 k8s-specifications]# kubectl delete po vote-94849dc97-zg2tl
+pod "vote-94849dc97-zg2tl" deleted
+[root@ip-172-31-10-94 k8s-specifications]# kubectl get po -o wide
+NAME                      READY   STATUS    RESTARTS   AGE     IP                NODE                                             NOMINATED NODE   READINESS GATES
+db-b54cd94f4-m6sq9        1/1     Running   0          7m54s   192.168.105.179   ip-172-31-8-95.ap-southeast-1.compute.internal   <none>           <none>
+redis-868d64d78-zq9ng     1/1     Running   0          7m54s   192.168.105.180   ip-172-31-8-95.ap-southeast-1.compute.internal   <none>           <none>
+result-5d57b59f4b-fp4pp   1/1     Running   0          7m54s   192.168.105.181   ip-172-31-8-95.ap-southeast-1.compute.internal   <none>           <none>
+vote-94849dc97-fmtxt      1/1     Running   0          55s     192.168.105.184   ip-172-31-8-95.ap-southeast-1.compute.internal   <none>           <none>
+worker-dd46d7584-b2rsv    1/1     Running   0          7m53s   192.168.105.183   ip-172-31-8-95.ap-southeast-1.compute.internal   <none>           <none>
+[root@ip-172-31-10-94 k8s-specifications]# pwd
+/root/example-voting-app/k8s-specifications
+[root@ip-172-31-10-94 k8s-specifications]# ls
+db-deployment.yaml  redis-deployment.yaml  result-deployment.yaml  vote-deployment.yaml  worker-deployment.yaml
+db-service.yaml     redis-service.yaml     result-service.yaml     vote-service.yaml
+[root@ip-172-31-10-94 k8s-specifications]# cat vote-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vote
+spec:
+  selector:
+    matchLabels:
+      app: vote
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: vote
+    spec:
+      containers:
+      - image: dockersamples/examplevotingapp_vote:before
+        name: vote
+[root@ip-172-31-10-94 k8s-specifications]# kubectl delete po db-b54cd94f4-m6sq9
+pod "db-b54cd94f4-m6sq9" deleted
+[root@ip-172-31-10-94 k8s-specifications]# kubectl get po -o wide
+NAME                      READY   STATUS    RESTARTS   AGE     IP                NODE                                             NOMINATED NODE   READINESS GATES
+db-b54cd94f4-xw79b        1/1     Running   0          45s     192.168.105.185   ip-172-31-8-95.ap-southeast-1.compute.internal   <none>           <none>
+redis-868d64d78-zq9ng     1/1     Running   0          11m     192.168.105.180   ip-172-31-8-95.ap-southeast-1.compute.internal   <none>           <none>
+result-5d57b59f4b-fp4pp   1/1     Running   0          11m     192.168.105.181   ip-172-31-8-95.ap-southeast-1.compute.internal   <none>           <none>
+vote-94849dc97-fmtxt      1/1     Running   0          4m58s   192.168.105.184   ip-172-31-8-95.ap-southeast-1.compute.internal   <none>           <none>
+worker-dd46d7584-b2rsv    1/1     Running   1          11m     192.168.105.183   ip-172-31-8-95.ap-southeast-1.compute.internal   <none>           <none>
+[root@ip-172-31-10-94 k8s-specifications]# kubectl restart result-5d57b59f4b-fp4pp
+Error: unknown command "restart" for "kubectl"
+Run 'kubectl --help' for usage.
+[root@ip-172-31-10-94 k8s-specifications]# kubectl delete result-5d57b59f4b-fp4pp
+error: the server doesn't have a resource type "result-5d57b59f4b-fp4pp"
+[root@ip-172-31-10-94 k8s-specifications]# kubectl delete po result-5d57b59f4b-fp4pp
+pod "result-5d57b59f4b-fp4pp" deleted
+[root@ip-172-31-10-94 k8s-specifications]# kubectl ^C
+[root@ip-172-31-10-94 k8s-specifications]# ^C
+[root@ip-172-31-10-94 k8s-specifications]# ^C
+[root@ip-172-31-10-94 k8s-specifications]#
